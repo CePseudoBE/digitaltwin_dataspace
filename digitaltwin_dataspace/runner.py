@@ -69,7 +69,7 @@ def run_components(components: List[Component]):
     def run_app():
         try:
             logger.info("Starting FastAPI app on http://localhost:8080")
-            uvicorn.run(app, host="localhost", port=8080,log_level="critical")
+            uvicorn.run(app, host="localhost", port=8080,log_level="debug")
         except Exception as e:
             logger.exception("Failed to start FastAPI app", exc_info=e)
 

@@ -2,6 +2,7 @@ from .components import (
     Collector,
     Harvester,
     Handler,
+    AssetsManager,
     ScheduleRunnable,
     Component,
     servable_endpoint,

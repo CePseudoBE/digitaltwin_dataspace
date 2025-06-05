@@ -105,6 +105,10 @@ class FileStorageManager(StorageManager):
         :param file_name: Name of the file to delete.
         """
         os.remove(file_name)
+        #recursively remove empty directories
+        for dirpath, dirnames, filenames in os.walk(os.path.dirname(file_name)):
+            if not dirnames and not filenames:
+                os.rmdir(dirpath)
 
 
 if "AZURE_STORAGE_CONNECTION_STRING" in os.environ:

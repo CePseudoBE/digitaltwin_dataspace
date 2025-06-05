@@ -17,7 +17,7 @@ class Data:
     hash: str
     _url: str
     content_type: str = None
-
+    description: str = None
     @property
     def data(self) -> bytes:
         return storage_manager.read(self._url)
@@ -26,10 +26,9 @@ class Data:
 def data_result(func) -> Optional[Union[Data, List[Data]]]:
     def wrapper(*args, **kwargs):
         result = func(*args, **kwargs)
-
         if result is None:
             return None
-
+        print("result", result)
         # If the result is a single row, return a single Data object
         if not isinstance(result, list):
             return Data(date=result.date, _url=result.data, content_type=result.type, hash=result.hash)
