@@ -59,3 +59,21 @@ def delete_result(table: Table, url: str):
         connection.commit()
         storage_manager.delete(url)
 
+
+def write_tileset(folder_json: dict, name: str, content_type: str, table: Table, date: datetime, description: str = None):
+    for file_path, content in folder_json.items():
+        #Only write the tileset.json to the database, the rest in indexed in the tileset.json file
+        if "tileset.json" in file_path or "layer.json" in file_path:
+            write_result(name, "application/json", table, content, date, description=description, append_path=file_path)
+        else:
+            with engine.connect() as connection:
+                # Upload data to storage
+                url = storage_manager.write(
+                    f"{name}/{date.strftime('%Y-%m-%d_%H-%M-%S')}/{file_path}",
+                    content,
+            )
+
+
+
+    
+    

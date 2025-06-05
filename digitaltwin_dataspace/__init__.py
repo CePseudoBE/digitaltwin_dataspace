@@ -3,6 +3,7 @@ from .components import (
     Harvester,
     Handler,
     AssetsManager,
+    TilesetManager,
     ScheduleRunnable,
     Component,
     servable_endpoint,

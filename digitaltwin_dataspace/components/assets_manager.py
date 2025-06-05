@@ -7,7 +7,8 @@ from fastapi import Response, UploadFile, Form
 from .base import Component, Servable, servable_endpoint
 from ..data.retrieve import retrieve_before_datetime
 from ..data.sync_db import get_or_create_standard_component_table
-from ..data.write import write_result, delete_result
+from ..data.write import write_result, delete_result, write_tileset
+from ..utilities.zip_to_dict import zip_to_dict
 import json
 
 class AssetsManager(Component, Servable, abc.ABC):
@@ -42,8 +43,7 @@ class TilesetManager(AssetsManager):
     @servable_endpoint(path="/upload", method="POST", response_model=str)
     def upload(self, zip_file: UploadFile, description: str = Form(...)):
         folder_json = zip_to_dict(zip_file)
-        for file_path, content in folder_json.items():
-            write_result(self.get_configuration().name, self.get_configuration().content_type, self.get_table(), content, datetime.now(), sub_path=file_path, description=description)
+        write_tileset(folder_json, self.get_configuration().name, self.get_configuration().content_type, self.get_table(), datetime.now())
         return f"Received item with name: {folder_json.get('name', 'N/A')} and processed via collect."
     
     @servable_endpoint(path="/")
@@ -54,4 +54,9 @@ class TilesetManager(AssetsManager):
             limit=1000
         )
         data = [{"url": item._url, "description": item.description} for item in data if "tileset.json" in item._url]
-        return Response(content=json.dumps(data))         
+        return Response(content=json.dumps(data))   
+
+    @servable_endpoint(path="/delete", method="DELETE", response_model=str)
+    def delete(self, url: str):
+        delete_tileset(self.get_table(), url)
+        return f"Deleted file {url}"
