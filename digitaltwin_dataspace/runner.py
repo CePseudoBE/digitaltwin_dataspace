@@ -9,6 +9,7 @@ import uvicorn
 
 from .components.base import Component, ScheduleRunnable, Servable
 from .utils import schedule_string_to_function
+from fastapi.middleware.cors import CORSMiddleware
 
 # Setup logging
 logging.basicConfig(
@@ -34,6 +35,13 @@ def run_components(components: List[Component]):
     app = fastapi.FastAPI(
         redoc_url="/docs",
         docs_url=None,
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # or specify domains like ["http://localhost:3000"]
+        allow_credentials=True,
+        allow_methods=["*"],  # or ["GET", "POST", "DELETE"]
+        allow_headers=["*"],  # or ["Content-Type", "Authorization"]
     )
 
     for component in components:
