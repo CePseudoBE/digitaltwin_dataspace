@@ -38,4 +38,20 @@ class AssetsManager(Component, Servable, abc.ABC):
         return f"Deleted file {url}"
     
 
-            
+class TilesetManager(AssetsManager):
+    @servable_endpoint(path="/upload", method="POST", response_model=str)
+    def upload(self, zip_file: UploadFile, description: str = Form(...)):
+        folder_json = zip_to_dict(zip_file)
+        for file_path, content in folder_json.items():
+            write_result(self.get_configuration().name, self.get_configuration().content_type, self.get_table(), content, datetime.now(), sub_path=file_path, description=description)
+        return f"Received item with name: {folder_json.get('name', 'N/A')} and processed via collect."
+    
+    @servable_endpoint(path="/")
+    def retrieve(self, timestamp: datetime = None) -> Response:
+        data = retrieve_before_datetime(
+            self.get_table(),
+            timestamp if timestamp else datetime.now(),
+            limit=1000
+        )
+        data = [{"url": item._url, "description": item.description} for item in data if "tileset.json" in item._url]
+        return Response(content=json.dumps(data))         
