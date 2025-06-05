@@ -26,6 +26,7 @@ dependencies = [
     "dotenv",
     "pydantic",
     "fastapi",
+    "uvicorn",
 ]
 
 [project.urls]
