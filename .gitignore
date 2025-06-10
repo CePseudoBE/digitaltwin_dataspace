@@ -6,3 +6,6 @@
 *.pywz
 *.pyzw
 *.pyzwz
+.env
+.idea
+digitaltwin_dataspace/src/data
