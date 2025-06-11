@@ -73,7 +73,8 @@ def run_components(components: List[Component]):
         except Exception as e:
             logger.exception("Failed to start FastAPI app", exc_info=e)
 
-    run_app()  # Lancer dans le même process, routes bien présentes
+
+    Process(target=run_app).start()
 
     logger.info("Scheduler started")
     while True:
