@@ -1,0 +1,8 @@
+requests
+SQLAlchemy
+azure-storage-blob
+schedule
+dotenv
+pydantic
+fastapi
+uvicorn

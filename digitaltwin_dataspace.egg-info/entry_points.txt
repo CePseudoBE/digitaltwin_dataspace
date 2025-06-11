@@ -1,0 +1,2 @@
+[console_scripts]
+dt-dataspace = digitaltwin_dataspace.cli:main
