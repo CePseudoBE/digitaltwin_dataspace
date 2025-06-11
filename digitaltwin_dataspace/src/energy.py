@@ -11,7 +11,7 @@ from digitaltwin_dataspace import run_components, Collector, ComponentConfigurat
 class EnergyCollection(Collector):
 
     def get_schedule(self) -> str:
-        return "1d"
+        return "1s"
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
@@ -22,12 +22,9 @@ class EnergyCollection(Collector):
         )
 
     def collect(self) -> bytes:
-        response = requests.get(
-            "http://api.el.sc.ulb.be/energy"
-        )
-
-        return response.json()
-
+        response = requests.get("http://api.el.sc.ulb.be/energy")
+        response.raise_for_status()
+        return json.dumps(response.json()).encode("utf-8")
 
 if __name__ == "__main__":
     run_components([
