@@ -74,8 +74,7 @@ def run_components(components: List[Component]):
             logger.exception("Failed to start FastAPI app", exc_info=e)
 
 
-    #Process(target=run_app).start() todo : not working on windows
-    run_app()
+    Process(target=run_app).start()
 
     logger.info("Scheduler started")
     while True:
