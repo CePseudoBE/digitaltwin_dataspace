@@ -6,3 +6,7 @@
 *.pywz
 *.pyzw
 *.pyzwz
+.env
+.idea
+data
+.venv
