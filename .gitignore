@@ -8,4 +8,5 @@
 *.pyzwz
 .env
 .idea
-digitaltwin_dataspace/src/data
+data
+.venv
