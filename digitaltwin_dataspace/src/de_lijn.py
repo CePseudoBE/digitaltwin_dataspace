@@ -8,7 +8,7 @@ from digitaltwin_dataspace import Collector, ComponentConfiguration, run_compone
 
 class DeLijnGTFSStaticCollector(Collector):
     def get_schedule(self) -> str:
-        return "1m"  # Collecte toutes les 30 minutes
+        return "30m"  # Collecte toutes les 30 minutes
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
