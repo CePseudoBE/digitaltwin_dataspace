@@ -2,12 +2,15 @@ import json
 import geopandas as gpd
 import pandas as pd
 import requests
+import dotenv
+
+dotenv.load_dotenv()
 
 from digitaltwin_dataspace import Collector, ComponentConfiguration, run_components
 
 class IrcelineSOSCollector(Collector):
     def get_schedule(self) -> str:
-        return "10m"  # Collecte toutes les 10 minutes
+        return "1m"  # Collecte toutes les 10 minutes
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
@@ -25,12 +28,12 @@ class IrcelineSOSCollector(Collector):
         response_json = response.json()
         response_df = pd.json_normalize(response_json, max_level=4)
 
-        # Extraction des coordonnées géographiques
-        coords = pd.DataFrame(
-            response_df["station.geometry.coordinates"].tolist(),
-            columns=["longitude", "latitude"]
+        # Extraction des coordonnées, en gérant les cas avec 3 valeurs (lon, lat, alt)
+        coords = response_df["station.geometry.coordinates"].apply(
+            lambda x: x[:2] if isinstance(x, list) and len(x) >= 2 else [None, None]
         )
-        response_df = pd.concat([response_df, coords], axis=1)
+        coords_df = pd.DataFrame(coords.tolist(), columns=["longitude", "latitude"])
+        response_df = pd.concat([response_df, coords_df], axis=1)
 
         # Création du GeoDataFrame
         gdf = gpd.GeoDataFrame(
@@ -39,7 +42,7 @@ class IrcelineSOSCollector(Collector):
             crs="EPSG:4326"
         )
 
-        # Suppression des colonnes inutiles
+        # Nettoyage
         columns_to_drop = [
             "station.geometry.coordinates", "station.geometry.type",
             "station.type", "referenceValues", "extras",
@@ -49,6 +52,7 @@ class IrcelineSOSCollector(Collector):
         gdf = gdf.drop(columns=columns_to_drop, errors='ignore')
 
         return gdf.to_json().encode('utf-8')
+
 
 # Pour l'exécuter avec d'autres collecteurs
 run_components([
