@@ -1,11 +1,14 @@
 import os
 import requests
+import dotenv
+
+dotenv.load_dotenv()
 
 from digitaltwin_dataspace import Collector, ComponentConfiguration, run_components
 
 class DeLijnGTFSStaticCollector(Collector):
     def get_schedule(self) -> str:
-        return "30m"  # Collecte toutes les 30 minutes
+        return "1m"  # Collecte toutes les 30 minutes
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
@@ -34,7 +37,7 @@ class DeLijnGTFSRealtimeCollector(Collector):
         )
 
     def collect(self) -> bytes:
-        endpoint = "https://api.delijn.be/gtfs/v2/realtime?json=false&delay=true&canceled=true"
+        endpoint = "https://api.delijn.be/gtfs/v3/realtime?json=false&delay=true&canceled=true"
         response = requests.get(
             endpoint, headers={"Ocp-Apim-Subscription-Key": os.environ["DE_LIJN_API_KEY"]}
         )
