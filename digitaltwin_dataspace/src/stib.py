@@ -1,25 +1,19 @@
-import dotenv
 import json
-from typing import List, Dict
+import requests
 import geopandas as gpd
 import pandas as pd
-import requests
 import shapely
-from bs4 import BeautifulSoup
-from collections import defaultdict
-from itertools import chain, product
+from digitaltwin_dataspace import Collector, ComponentConfiguration, run_components
+import os
+import dotenv
 
 dotenv.load_dotenv()
-
-from digitaltwin_dataspace import Collector, ComponentConfiguration, run_components
-from components.stib.utils.fetch import auth_request_to_stib, fetch_stib_dataset_records
-from components.stib.utils.constant import VEHICLE_POSITION_DATASET
-from components.stib.utils.converter import convert_dataframe_column_stop_to_generic
+print("DATABASE_URL =", repr(os.environ.get("DATABASE_URL")))
 
 class STIBGTFSCollector(Collector):
     def get_schedule(self) -> str:
-        return "1h"  # Mise à jour horaire
-    
+        return "1h"
+
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
             name="stib_gtfs_collector",
@@ -27,17 +21,19 @@ class STIBGTFSCollector(Collector):
             description="Collecte les données GTFS statiques de la STIB",
             content_type="application/zip"
         )
-    
+
     def collect(self) -> bytes:
-        response = auth_request_to_stib(
-            "https://stibmivb.opendatasoft.com/api/explore/v2.1/catalog/datasets/gtfs-files-production/alternative_exports/gtfszip/"
-        )
+        url = "https://stibmivb.opendatasoft.com/api/explore/v2.1/catalog/datasets/gtfs-files-production/alternative_exports/gtfszip/"
+        response = requests.get(url)
+        print("DATABASE_URL =", os.environ.get("DATABASE_URL"))
+        response.raise_for_status()
         return response.content
+
 
 class STIBShapeFilesCollector(Collector):
     def get_schedule(self) -> str:
         return "1h"
-    
+
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
             name="stib_shapefiles_collector",
@@ -45,70 +41,82 @@ class STIBShapeFilesCollector(Collector):
             description="Collecte les shapefiles du réseau STIB",
             content_type="application/geo+json"
         )
-    
+
     def collect(self) -> bytes:
-        response = auth_request_to_stib(
-            "https://stibmivb.opendatasoft.com/api/explore/v2.1/catalog/datasets/shapefiles-production/exports/geojson"
-        )
+        url = "https://stibmivb.opendatasoft.com/api/explore/v2.1/catalog/datasets/shapefiles-production/exports/geojson"
+        response = requests.get(url)
+        print("DATABASE_URL =", os.environ.get("DATABASE_URL"))
+        response.raise_for_status()
         return response.content
+
 
 class STIBStopsCollector(Collector):
     def get_schedule(self) -> str:
-        return "24h"  # Mise à jour quotidienne
-    
+        return "24h"
+
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
             name="stib_stops_collector",
             tags=["STIB", "GeoJSON", "Arrêts"],
-            description="Collecte et fusionne les données d'arrêts officielles et non officielles",
+            description="Collecte les arrêts STIB (exemple simplifié)",
             content_type="application/geo+json"
         )
-    
-    def collect(self) -> bytes:
-        data = self.merge_unofficial_and_official_stops_data()
-        with_lat_and_long = data[data["stop_lat"].notnull() & data["stop_lon"].notnull()]
-        
-        gdf = gpd.GeoDataFrame(
-            with_lat_and_long,
-            crs="epsg:4326",
-            geometry=[
-                shapely.geometry.Point(xy)
-                for xy in zip(with_lat_and_long["stop_lon"], with_lat_and_long["stop_lat"])
-            ]
-        )
-        
-        return json.dumps(json.loads(gdf.to_json())).encode('utf-8')
 
-    # Méthodes utilitaires conservées avec adaptation mineure
-    @staticmethod
-    def merge_unofficial_and_official_stops_data():
-        # Implémentation existante conservée
-        ...
+    def collect(self) -> bytes:
+        # Dataset des arrêts
+        url = "https://stibmivb.opendatasoft.com/api/explore/v2.1/catalog/datasets/stops-production/records?limit=1000"
+        response = requests.get(url)
+        response.raise_for_status()
+        records = response.json().get("results", [])
+
+        df = pd.DataFrame(records)
+        df = df[df["stop_lat"].notnull() & df["stop_lon"].notnull()]
+
+        gdf = gpd.GeoDataFrame(
+            df,
+            crs="EPSG:4326",
+            geometry=gpd.points_from_xy(df["stop_lon"], df["stop_lat"])
+        )
+
+        return gdf.to_json().encode("utf-8")
+
 
 class STIBVehiclePositionsCollector(Collector):
     def get_schedule(self) -> str:
-        return "30s"  # Mise à jour temps réel
-    
+        return "30s"
+
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
             name="stib_vehicle_positions_collector",
             tags=["STIB", "Temps réel"],
-            description="Collecte les positions des véhicules en temps réel",
-            content_type="application/json"
+            description="Collecte les positions des véhicules STIB",
+            content_type="application/geo+json"
         )
-    
+
     def collect(self) -> bytes:
-        raw_results = fetch_stib_dataset_records(
-            dataset=VEHICLE_POSITION_DATASET,
-            limit=100
-        )
-        
-        results = []
-        for raw_result in map(lambda x: x["fields"], raw_results):
-            for vehicle_position in json.loads(raw_result["vehiclepositions"]):
-                results.append({**vehicle_position, "lineId": str(raw_result["lineid"])})
-        
-        return json.dumps(results).encode('utf-8')
+        url = "https://stibmivb.opendatasoft.com/api/explore/v2.1/catalog/datasets/vehicle-positions-production/records?limit=100"
+        response = requests.get(url)
+        response.raise_for_status()
+        raw_data = response.json().get("results", [])
+
+        features = []
+        for entry in raw_data:
+            if "vehiclepositions" in entry and "lineid" in entry:
+                vehicle_data = json.loads(entry["vehiclepositions"])
+                for v in vehicle_data:
+                    lon = v.get("longitude")
+                    lat = v.get("latitude")
+                    if lon is not None and lat is not None:
+                        feature = {
+                            "type": "Feature",
+                            "geometry": {"type": "Point", "coordinates": [lon, lat]},
+                            "properties": {**v, "lineId": entry["lineid"]},
+                        }
+                        features.append(feature)
+
+        geojson = {"type": "FeatureCollection", "features": features}
+        return json.dumps(geojson).encode("utf-8")
+
 
 run_components([
     STIBGTFSCollector(),
