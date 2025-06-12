@@ -4,6 +4,9 @@ import pandas as pd
 import shapely
 import requests
 from requests import JSONDecodeError
+import dotenv
+
+dotenv.load_dotenv()
 
 from digitaltwin_dataspace import Collector, ComponentConfiguration, run_components
 
@@ -39,21 +42,41 @@ class PonyVehiclePositionCollector(Collector):
     def collect(self) -> bytes:
         endpoint = "https://gbfs.getapony.com/v1/Brussels/en/free_bike_status.json"
         response = requests.get(endpoint)
+
         try:
             response_json = response.json()
-            response_df = pd.json_normalize(response_json["data"]["bikes"])
-            response_gdf = gpd.GeoDataFrame(
-                response_df,
-                crs="epsg:4326",
-                geometry=[
-                    shapely.geometry.Point(xy)
-                    for xy in zip(response_df["lon"], response_df["lat"])
-                ],
-            )
-            response_gdf = response_gdf.drop(columns=["lat", "lon"])
-            return response_gdf.to_json().encode('utf-8')
+            bikes = response_json["data"]["bikes"]
+
+            features = []
+            for bike in bikes:
+                # Construire manuellement le GeoJSON
+                feature = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [bike["lon"], bike["lat"]]
+                    },
+                    "properties": {
+                        k: v for k, v in bike.items()
+                        if k not in ["lat", "lon", "rental_uris"]
+                    }
+                }
+
+                # Ajouter rental_uris s’il existe
+                if "rental_uris" in bike:
+                    feature["properties"]["rental_uris"] = bike["rental_uris"]
+
+                features.append(feature)
+
+            geojson = {
+                "type": "FeatureCollection",
+                "features": features
+            }
+
+            return json.dumps(geojson).encode("utf-8")
+
         except JSONDecodeError:
-            raise Exception("Pony API is not available, returned " + response.text)
+            raise Exception("Pony API is not available, returned: " + response.text)
 
 class PonyVehicleTypeCollector(Collector):
     def get_schedule(self) -> str:
