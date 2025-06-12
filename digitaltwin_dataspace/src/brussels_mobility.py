@@ -1,4 +1,7 @@
 import requests
+import dotenv
+
+dotenv.load_dotenv()
 
 from digitaltwin_dataspace import Collector, ComponentConfiguration, run_components
 
