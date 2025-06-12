@@ -3,12 +3,15 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 import requests
+import dotenv
+
+dotenv.load_dotenv()
 
 from digitaltwin_dataspace import Collector, ComponentConfiguration, run_components
 
 class DottGeofenceCollector(Collector):
     def get_schedule(self) -> str:
-        return "10m"  # Collecte toutes les 10 minutes
+        return "1m"  # Collecte toutes les 10 minutes
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
@@ -38,22 +41,34 @@ class DottVehiclePositionCollector(Collector):
     def collect(self) -> bytes:
         endpoint = "https://gbfs.api.ridedott.com/public/v2/brussels/free_bike_status.json"
         response = requests.get(endpoint)
-        response_json = response.json()
-        response_df = pd.json_normalize(response_json["data"]["bikes"])
-        response_gdf = gpd.GeoDataFrame(
-            response_df,
-            crs="epsg:4326",
-            geometry=[
-                shapely.geometry.Point(xy)
-                for xy in zip(response_df["lon"], response_df["lat"])
-            ],
-        )
-        response_gdf = response_gdf.drop(columns=["lat", "lon"])
-        return response_gdf.to_json().encode('utf-8')
+        response.raise_for_status()
+        bikes = response.json()["data"]["bikes"]
+
+        features = []
+        for bike in bikes:
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [bike["lon"], bike["lat"]],
+                },
+                "properties": {
+                    k: v for k, v in bike.items()
+                    if k not in ["lat", "lon"]
+                }
+            }
+            features.append(feature)
+
+        geojson = {
+            "type": "FeatureCollection",
+            "features": features
+        }
+
+        return json.dumps(geojson).encode("utf-8")
 
 class DottVehicleTypeCollector(Collector):
     def get_schedule(self) -> str:
-        return "10m"  # Collecte toutes les 10 minutes
+        return "1m"  # Collecte toutes les 10 minutes
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
