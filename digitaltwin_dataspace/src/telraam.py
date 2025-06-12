@@ -8,7 +8,7 @@ from digitaltwin_dataspace import Collector, ComponentConfiguration, run_compone
 
 class TelraamTrafficCollector(Collector):
     def get_schedule(self) -> str:
-        return "1m"  # Collecte toutes les minutes (à adapter selon besoin)
+        return "10s"  # Collecte toutes les minutes (à adapter selon besoin)
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
