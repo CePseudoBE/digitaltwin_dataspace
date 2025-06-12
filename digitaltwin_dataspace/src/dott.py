@@ -11,7 +11,7 @@ from digitaltwin_dataspace import Collector, ComponentConfiguration, run_compone
 
 class DottGeofenceCollector(Collector):
     def get_schedule(self) -> str:
-        return "1m"  # Collecte toutes les 10 minutes
+        return "10m"  # Collecte toutes les 10 minutes
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
@@ -68,7 +68,7 @@ class DottVehiclePositionCollector(Collector):
 
 class DottVehicleTypeCollector(Collector):
     def get_schedule(self) -> str:
-        return "1m"  # Collecte toutes les 10 minutes
+        return "10m"  # Collecte toutes les 10 minutes
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
