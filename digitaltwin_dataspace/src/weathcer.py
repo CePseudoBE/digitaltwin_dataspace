@@ -8,7 +8,7 @@ from digitaltwin_dataspace import Collector, ComponentConfiguration, run_compone
 
 class OpenWeatherCollector(Collector):
     def get_schedule(self) -> str:
-        return "5m"  # Collecte toutes les 5 minutes (modifiable)
+        return "10s"  # Collecte toutes les 5 minutes (modifiable)
 
     def get_configuration(self) -> ComponentConfiguration:
         return ComponentConfiguration(
