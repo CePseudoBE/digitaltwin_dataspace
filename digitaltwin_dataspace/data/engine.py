@@ -28,7 +28,7 @@ class LazyEngine:
                 args["poolclass"] = NullPool
                 args["pool_recycle"] = 1800
 
-
+            print(os.environ.get("DATABASE_URL", ""))
             self._engine = create_engine(os.environ.get("DATABASE_URL", ""), **args)
         return self._engine
 
