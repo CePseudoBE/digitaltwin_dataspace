@@ -7,6 +7,8 @@
 *.pyzw
 *.pyzwz
 .env
-.idea
-data
 .venv
+data
+.idea
+digitaltwin_dataspace/src/data
+
