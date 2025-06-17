@@ -23,7 +23,6 @@ class AssetsManager(Component, Servable, abc.ABC):
             timestamp if timestamp else datetime.now(),
             limit=1000
         )
-        print("data", data)
         assets = [{'url': data._url, 'description' : data.description} for data in data]
         return Response(content=json.dumps(assets))
 
@@ -42,8 +41,10 @@ class AssetsManager(Component, Servable, abc.ABC):
 class TilesetManager(AssetsManager):
     @servable_endpoint(path="/upload", method="POST", response_model=str)
     def upload(self, zip_file: UploadFile, description: str = Form(...)):
+        print("uploading tileset")
         folder_json = zip_to_dict(zip_file)
-        write_tileset(folder_json, self.get_configuration().name, self.get_configuration().content_type, self.get_table(), datetime.now())
+        print("folder_json", folder_json.keys())
+        write_tileset(folder_json, self.get_configuration().name, self.get_configuration().content_type, self.get_table(), datetime.now(), description=description)
         return f"Received item with name: {folder_json.get('name', 'N/A')} and processed via collect."
     
     @servable_endpoint(path="/")

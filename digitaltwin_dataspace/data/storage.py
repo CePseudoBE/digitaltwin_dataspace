@@ -159,7 +159,10 @@ class FileStorageManager(StorageManager):
         # create directory if it does not exist
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, "wb") as file:
-            file.write(data)
+            if isinstance(data, str):
+                file.write(data.encode("utf-8"))  # Convert string to bytes
+            else:
+                file.write(data)  # Assume it's already bytes
 
         return file_path
 
