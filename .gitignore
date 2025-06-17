@@ -7,5 +7,7 @@
 *.pyzw
 *.pyzwz
 .env
+.venv
+data
 .idea
 digitaltwin_dataspace/src/data

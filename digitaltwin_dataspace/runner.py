@@ -73,7 +73,6 @@ def run_components(components: List[Component]):
         except Exception as e:
             logger.exception("Failed to start FastAPI app", exc_info=e)
 
-
     Process(target=run_app).start()
 
     logger.info("Scheduler started")
