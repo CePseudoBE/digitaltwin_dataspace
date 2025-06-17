@@ -48,3 +48,4 @@ def write_result(
         )
 
         connection.commit()
+
