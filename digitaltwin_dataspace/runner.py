@@ -83,3 +83,4 @@ def run_components(components: List[Component]):
             time.sleep(1)
         except Exception as e:
             logger.exception("Error during scheduler run", exc_info=e)
+
