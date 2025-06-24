@@ -32,9 +32,10 @@ class Collector(Component, ScheduleRunnable, Servable, abc.ABC):
         )
         assets = []
         for data in data:
-            r = json.loads(data.data)["layer"]
-            r["_url"] = data._url
-            assets.append(r)
+            if json.loads(data.data).get("layer") is not None:
+                r = json.loads(data.data)["layer"]
+                r["_url"] = data._url
+                assets.append(r)
         return Response(content=json.dumps(assets), media_type='application/json')
     
     @servable_endpoint(path="/delete", method="DELETE", response_model=str)
