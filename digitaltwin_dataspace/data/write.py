@@ -38,10 +38,12 @@ def write_result(
     with engine.connect() as connection:
 
         # Upload data to storage
-        url = storage_manager.write(
-            f"{name}/{date.strftime('%Y-%m-%d_%H-%M-%S')}/{append_path}",
-            data_bytes,
-        )
+        default_path = f"{name}/{date.strftime('%Y-%m-%d_%H-%M-%S')}"
+
+        if append_path is not None: default_path += f"/{append_path}"
+
+        url = storage_manager.write(default_path, data_bytes)
+
         # Insert data to database
         connection.execute(
             table.insert().values(
