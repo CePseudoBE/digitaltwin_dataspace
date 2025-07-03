@@ -7,3 +7,5 @@
 *.pyzw
 *.pyzwz
 .idea
+/build
+*.egg-info
