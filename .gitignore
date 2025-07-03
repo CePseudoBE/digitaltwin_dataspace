@@ -6,3 +6,5 @@
 *.pywz
 *.pyzw
 *.pyzwz
+/build
+*.egg-info
