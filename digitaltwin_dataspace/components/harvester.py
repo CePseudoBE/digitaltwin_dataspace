@@ -124,15 +124,19 @@ class Harvester(Component, ScheduleRunnable, Servable, abc.ABC):
                     dependencies, configuration.dependencies_limit
             ):
                 dependency_table = get_or_create_standard_component_table(dependency)
+
+                # Décalage de 1 microseconde pour être sûr de ne pas être "exact"
                 dependency_data = retrieve_latest_rows_before_datetime(
-                    dependency_table, storage_date, dependency_limit
+                    dependency_table, storage_date + timedelta(microseconds=1), dependency_limit
                 )
+
+                print(f"[DEBUG] dependency_data before assignment: {dependency_data}")
 
                 if dependency_limit == 1:
                     if not dependency_data:
                         raise ValueError(f"Dependency {dependency} not found")
-
                     dependency_data = dependency_data[0]
+
                 dependencies_data[dependency] = dependency_data
 
         result = self.harvest(source_data, **dependencies_data)

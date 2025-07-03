@@ -39,6 +39,7 @@ def write_result(
 
         # Upload data to storage
         default_path = f"{name}/{date.strftime('%Y-%m-%d_%H-%M-%S')}"
+     
         if append_path is not None: default_path += f"/{append_path}"
         url = storage_manager.write(default_path, data_bytes)
 
