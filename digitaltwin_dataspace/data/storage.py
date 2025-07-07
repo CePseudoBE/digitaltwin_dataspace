@@ -16,6 +16,9 @@ class StorageManager(abc.ABC):
     @abc.abstractmethod
     def delete(self, file_name: str): ...
 
+    @abc.abstractmethod
+    def delete_folder(self, folder_name: str): ...
+
 
 class AzureBlobManager(StorageManager):
     def __init__(self, connection_string, container_name):
@@ -68,6 +71,16 @@ class AzureBlobManager(StorageManager):
         )
         blob_client.delete_blob()
 
+    def delete_folder(self, folder_name: str):
+        """
+        Delete a folder in Azure Blob Storage.
+
+        :param folder_name: Name of the folder to delete.
+        """
+        blobs = self.container_client.list_blobs(name_starts_with=folder_name)
+        for blob in blobs:
+            self.container_client.delete_blob(blob.name)
+
 
 class OVHBlobManager(StorageManager):
     def __init__(self, endpoint_url, access_key, secret_key, bucket_name):
@@ -99,8 +112,21 @@ class OVHBlobManager(StorageManager):
         return response['Body'].read()
 
     
-    def delete(self, file_name: str):
-        self.s3.delete_object(Bucket=self.bucket_name, Key=file_name)
+    def delete(self, file_url: str):
+        parsed_url = urlparse(file_url)
+        key = parsed_url.path.lstrip('/')
+        self.s3.delete_object(Bucket=self.bucket_name, Key=key)
+
+    def delete_folder(self, folder_name: str):
+        """
+        Delete a folder in OVH S3 Storage.
+
+        :param folder_name: Name of the folder to delete.
+        """
+        response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix=folder_name)
+        if 'Contents' in response:
+            for item in response['Contents']:
+                self.s3.delete_object(Bucket=self.bucket_name, Key=item['Key'])
     
     def configure_cors(self, allowed_origins=None, allowed_methods=None, allowed_headers=None, max_age_seconds=3000):
         """
@@ -187,6 +213,17 @@ class FileStorageManager(StorageManager):
         for dirpath, dirnames, filenames in os.walk(os.path.dirname(file_name)):
             if not dirnames and not filenames:
                 os.rmdir(dirpath)
+
+    def delete_folder(self, folder_name: str):
+        """
+        Delete a folder in the local file system.
+
+        :param folder_name: Name of the folder to delete.
+        """
+        import shutil
+        folder_path = os.path.join(self.directory, folder_name)
+        if os.path.isdir(folder_path):
+            shutil.rmtree(folder_path)
 
 
 if "AZURE_STORAGE_CONNECTION_STRING" in os.environ:

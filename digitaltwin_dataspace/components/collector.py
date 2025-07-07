@@ -38,10 +38,6 @@ class Collector(Component, ScheduleRunnable, Servable, abc.ABC):
                 assets.append(r)
         return Response(content=json.dumps(assets), media_type='application/json')
     
-    @servable_endpoint(path="/delete", method="DELETE", response_model=str)
-    def delete(self, url: str):
-        delete_result(self.get_table(), url)
-        return f"Deleted file {url}"
     
     def run(self) -> Any:
         result = self.collect()

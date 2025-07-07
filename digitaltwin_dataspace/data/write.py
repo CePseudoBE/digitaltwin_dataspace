@@ -74,6 +74,26 @@ def write_tileset(folder_json: dict, name: str, content_type: str, table: Table,
                     content,
             )
 
+def delete_tileset(table: Table, url: str):
+    with engine.connect() as connection:
+        # Retrieve the date from the database
+        select_stmt = table.select().where(table.c.data == url)
+        db_result = connection.execute(select_stmt).first()
+
+        if not db_result:
+            return  # Or raise an error if the URL is not found
+
+        date = db_result.date
+        name = table.name
+
+        # Construct the folder path to delete
+        folder_to_delete = f"{name}/{date.strftime('%Y-%m-%d_%H-%M-%S')}"
+        storage_manager.delete_folder(folder_to_delete)
+
+        # Delete the entry from the database
+        connection.execute(table.delete().where(table.c.data == url))
+        connection.commit()
+
 
 
     

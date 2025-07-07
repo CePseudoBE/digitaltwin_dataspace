@@ -28,13 +28,12 @@ def data_result(func) -> Optional[Union[Data, List[Data]]]:
         result = func(*args, **kwargs)
         if result is None:
             return None
-        print("result", result)
         # If the result is a single row, return a single Data object
         if not isinstance(result, list):
-            return Data(date=result.date, _url=result.data, content_type=result.type, hash=result.hash)
+            return Data(date=result.date, _url=result.data, content_type=result.type, hash=result.hash, description=result.description)
 
         return [
-            Data(date=row.date, _url=row.data, content_type=row.type, hash=row.hash)
+            Data(date=row.date, _url=row.data, content_type=row.type, hash=row.hash, description=row.description)
             for row in result
         ]
 
@@ -58,6 +57,7 @@ def base_query(table: Table, with_null: bool = False):
         coalesce(t2.c.data, table.c.data).label("data"),
         table.c.type,
         coalesce(t2.c.hash, table.c.hash).label("hash"),
+        coalesce(t2.c.description, table.c.description).label("description"),
     )
 
     if not with_null:
