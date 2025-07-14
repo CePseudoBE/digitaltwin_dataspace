@@ -11,6 +11,10 @@ from .components.base import Component, ScheduleRunnable, Servable
 from .utils import schedule_string_to_function
 from fastapi.middleware.cors import CORSMiddleware
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -36,9 +40,12 @@ def run_components(components: List[Component]):
         redoc_url="/docs",
         docs_url=None,
     )
+
+    origin = os.environ.get("API_GATEWAY_URL", "*")
+    
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # or specify domains like ["http://localhost:3000"]
+        allow_origins=[origin],  # or specify domains like ["http://localhost:3000"]
         allow_credentials=True,
         allow_methods=["*"],  # or ["GET", "POST", "DELETE"]
         allow_headers=["*"],  # or ["Content-Type", "Authorization"]
